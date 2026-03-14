@@ -320,6 +320,7 @@
       font-weight: 800;
       line-height: 1;
       margin-bottom: 0.3rem;
+      color: var(--text);
     }
 
     .result-card .result-letter {
@@ -389,12 +390,7 @@
     .result-card.color-4::before { background: var(--accent5); }
     .result-card.color-5::before { background: #38bdf8; }
 
-    .result-score.color-0 { color: var(--accent); }
-    .result-score.color-1 { color: var(--accent2); }
-    .result-score.color-2 { color: var(--accent3); }
-    .result-score.color-3 { color: var(--accent4); }
-    .result-score.color-4 { color: var(--accent5); }
-    .result-score.color-5 { color: #38bdf8; }
+    /* accent colors handled via top border only */
 
     /* base result */
     #base-result-card {
@@ -716,7 +712,7 @@
       rc.className = `result-card ${colorClass}`;
       rc.innerHTML = `
         <div class="result-label">${name}</div>
-        <div class="result-score ${colorClass}">${result.toFixed(2)}%</div>
+        <div class="result-score">${result.toFixed(2)}%</div>
         <div class="result-letter">${letterGrade(result)}</div>
         <div class="result-delta ${deltaClass}">${deltaStr} vs raw</div>
         <span class="result-type-badge">${curveLabel.split('(')[0].trim()}</span>
