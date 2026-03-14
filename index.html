@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grade Curve Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #161923;
+      --surface2: #1e2330;
+      --border: #2a3045;
+      --accent: #6ee7b7;
+      --accent2: #818cf8;
+      --accent3: #fb923c;
+      --accent4: #f472b6;
+      --accent5: #facc15;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --danger: #f87171;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(110,231,183,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(110,231,183,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── SECTION BLOCKS ── */
+    .block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .block-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .block-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .block-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .block-subtitle {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    /* ── INPUTS ── */
+    label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    input[type="number"], select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.9rem center;
+      padding-right: 2.5rem;
+    }
+
+    select option { background: var(--surface2); }
+
+    /* ── SCENARIO CARDS ── */
+    #scenarios-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .scenario-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+
+    .scenario-card:hover { border-color: #3a4560; }
+
+    .scenario-top {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .scenario-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .scenario-name-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      padding: 0.25rem 0;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text);
+      outline: none;
+    }
+
+    .scenario-name-input:focus { border-bottom-color: var(--accent); }
+
+    .remove-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .remove-btn:hover { color: var(--danger); background: rgba(248,113,113,0.08); }
+
+    .scenario-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 520px) {
+      .scenario-fields { grid-template-columns: 1fr; }
+    }
+
+    .field-group label { margin-bottom: 0.3rem; }
+
+    /* Custom param row */
+    .custom-param-row {
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    .custom-param-row.visible { display: block; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.1rem;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:hover { opacity: 0.85; }
+
+    .btn-ghost {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #0d0f14;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    /* ── RESULTS ── */
+    #results-section {
+      display: none;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .result-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .result-card .result-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-card .result-score {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .result-card .result-letter {
+      font-size: 0.78rem;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    .result-card .result-delta {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    .result-delta.positive { color: var(--accent); }
+    .result-delta.negative { color: var(--danger); }
+
+    .result-card .result-type-badge {
+      font-size: 0.65rem;
+      background: rgba(255,255,255,0.06);
+      border-radius: 4px;
+      padding: 0.15rem 0.4rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      display: inline-block;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1rem 0;
+    }
+
+    /* ── FORMULA HINT ── */
+    .formula-hint {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(110,231,183,0.04);
+      border-left: 2px solid var(--accent);
+      border-radius: 0 4px 4px 0;
+    }
+
+    /* Grade input section top row */
+    .grade-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 480px) { .grade-row { grid-template-columns: 1fr; } }
+
+    /* Accent colors for scenario dots */
+    .color-0 { background: var(--accent); }
+    .color-1 { background: var(--accent2); }
+    .color-2 { background: var(--accent3); }
+    .color-3 { background: var(--accent4); }
+    .color-4 { background: var(--accent5); }
+    .color-5 { background: #38bdf8; }
+
+    .result-card.color-0::before { background: var(--accent); }
+    .result-card.color-1::before { background: var(--accent2); }
+    .result-card.color-2::before { background: var(--accent3); }
+    .result-card.color-3::before { background: var(--accent4); }
+    .result-card.color-4::before { background: var(--accent5); }
+    .result-card.color-5::before { background: #38bdf8; }
+
+    .result-score.color-0 { color: var(--accent); }
+    .result-score.color-1 { color: var(--accent2); }
+    .result-score.color-2 { color: var(--accent3); }
+    .result-score.color-3 { color: var(--accent4); }
+    .result-score.color-4 { color: var(--accent5); }
+    .result-score.color-5 { color: #38bdf8; }
+
+    /* base result */
+    #base-result-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    #base-result-card .result-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    #base-result-card .result-score {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    /* footer */
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.7rem;
+      margin-top: 3rem;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Grade Curve Calc</h1>
+    <p>Compare multiple grading scenarios side by side</p>
+  </header>
+
+  <!-- BLOCK 1: Base Grade -->
+  <div class="block" style="animation-delay:0.05s">
+    <div class="block-header">
+      <div class="block-icon" style="background:rgba(110,231,183,0.12)">📊</div>
+      <div>
+        <div class="block-title" style="color:var(--accent)">Your Grade</div>
+        <div class="block-subtitle">Enter your raw predicted or final score</div>
+      </div>
+    </div>
+
+    <div class="grade-row">
+      <div class="field-group">
+        <label>Raw Score (%)</label>
+        <input type="number" id="raw-grade" min="0" max="100" step="0.01" placeholder="e.g. 74.5" />
+      </div>
+      <div class="field-group">
+        <label>Total Points Possible</label>
+        <input type="number" id="total-points" min="1" step="1" placeholder="e.g. 500 (optional)" />
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCK 2: Scenarios -->
+  <div class="block" style="animation-delay:0.1s">
+    <div class="block-header">
+      <div class="block-icon" style="background:rgba(129,140,248,0.12)">⚡</div>
+      <div>
+        <div class="block-title" style="color:var(--accent2)">Grading Scenarios</div>
+        <div class="block-subtitle">Add as many curves or boosts as you want to compare</div>
+      </div>
+    </div>
+
+    <div id="scenarios-container"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="addScenario('curve')">＋ Add Curve</button>
+      <button class="btn btn-ghost" onclick="addScenario('extra_credit')">＋ Add Extra Credit</button>
+      <button class="btn btn-ghost" onclick="addScenario('flat_curve')">＋ Add Flat Bump</button>
+      <button class="btn btn-ghost" onclick="addScenario('scale_to')">＋ Add Scale-to</button>
+    </div>
+  </div>
+
+  <!-- Calculate -->
+  <div style="text-align:center; margin-bottom:1.25rem;">
+    <button class="btn btn-accent" style="font-size:0.9rem; padding:0.8rem 2rem;" onclick="calculate()">
+      Calculate ↗
+    </button>
+  </div>
+
+  <!-- BLOCK 3: Results -->
+  <div id="results-section" class="block" style="animation-delay:0s">
+    <div class="block-header">
+      <div class="block-icon" style="background:rgba(250,204,21,0.12)">🏁</div>
+      <div>
+        <div class="block-title" style="color:var(--accent5)">Results</div>
+        <div class="block-subtitle">All scenarios compared to your raw grade</div>
+      </div>
+    </div>
+
+    <div id="base-result-card">
+      <div class="result-label">Raw (No Curve)</div>
+      <div class="result-score" id="base-score-display">—</div>
+    </div>
+
+    <div class="results-grid" id="results-grid"></div>
+  </div>
+
+</div>
+
+<footer>Grade Curve Calculator · built for GitHub Pages</footer>
+
+<script>
+  const COLORS = ['color-0','color-1','color-2','color-3','color-4','color-5'];
+  const CURVE_OPTIONS = [
+    { value: 'sqrt',       label: 'Square Root  (√score × 10)' },
+    { value: 'sqrt_scale', label: 'Sqrt → Scale to max' },
+    { value: 'linear',     label: 'Linear Multiplier (×)' },
+    { value: 'power',      label: 'Power Curve  (score^n)' },
+    { value: 'add_points', label: 'Add Flat Points (+n)' },
+    { value: 'extra_credit', label: 'Extra Credit (+n pts)' },
+    { value: 'scale_to',   label: 'Scale to New Max' },
+    { value: 'bell',       label: 'Bell Curve Shift' },
+  ];
+
+  const PARAM_LABELS = {
+    sqrt:        null,
+    sqrt_scale:  { label: 'Scale-to Max (%)', placeholder: '100', default: '100' },
+    linear:      { label: 'Multiplier', placeholder: '1.1', default: '1.1' },
+    power:       { label: 'Exponent (n)', placeholder: '0.5', default: '0.5' },
+    add_points:  { label: 'Points to Add (%)', placeholder: '5', default: '5' },
+    extra_credit:{ label: 'Extra Credit Points', placeholder: '10', default: '10' },
+    scale_to:    { label: 'Current Class Max (%)', placeholder: '90', default: '90' },
+    bell:        { label: 'Shift Amount (+n%)', placeholder: '5', default: '5' },
+  };
+
+  const FORMULAS = {
+    sqrt:         'new = √(raw) × 10',
+    sqrt_scale:   'new = √(raw/100) × scale_max',
+    linear:       'new = raw × multiplier (capped at 100)',
+    power:        'new = (raw/100)^n × 100 (capped at 100)',
+    add_points:   'new = raw + n (capped at 100)',
+    extra_credit: 'new = raw + extra_credit / total_pts × 100',
+    scale_to:     'new = raw / class_max × 100 (capped at 100)',
+    bell:         'new = raw + shift (capped at 100)',
+  };
+
+  let scenarioCount = 0;
+
+  function addScenario(typeHint) {
+    const idx = scenarioCount++;
+    const colorClass = COLORS[idx % COLORS.length];
+    const defaultType = typeHint === 'extra_credit' ? 'extra_credit'
+                      : typeHint === 'flat_curve'   ? 'add_points'
+                      : typeHint === 'scale_to'     ? 'scale_to'
+                      : 'sqrt';
+
+    const defaultName = typeHint === 'extra_credit' ? 'Extra Credit'
+                      : typeHint === 'flat_curve'   ? 'Flat Bump'
+                      : typeHint === 'scale_to'     ? 'Scale to 100'
+                      : 'Sqrt Curve';
+
+    const card = document.createElement('div');
+    card.className = 'scenario-card';
+    card.dataset.idx = idx;
+    card.innerHTML = `
+      <div class="scenario-top">
+        <span class="scenario-dot ${colorClass}"></span>
+        <input class="scenario-name-input" type="text" value="${defaultName}" placeholder="Scenario name" />
+        <button class="remove-btn" onclick="removeScenario(this)" title="Remove">✕</button>
+      </div>
+      <div class="scenario-fields">
+        <div class="field-group">
+          <label>Curve / Adjustment Type</label>
+          <select onchange="onTypeChange(this)">
+            ${CURVE_OPTIONS.map(o => `<option value="${o.value}" ${o.value === defaultType ? 'selected' : ''}>${o.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field-group custom-param-row ${PARAM_LABELS[defaultType] ? 'visible' : ''}" id="param-row-${idx}">
+          <label id="param-label-${idx}">${PARAM_LABELS[defaultType]?.label ?? ''}</label>
+          <input type="number" id="param-input-${idx}" step="any"
+            placeholder="${PARAM_LABELS[defaultType]?.placeholder ?? ''}"
+            value="${PARAM_LABELS[defaultType]?.default ?? ''}" />
+        </div>
+      </div>
+      <div class="formula-hint" id="formula-hint-${idx}">${FORMULAS[defaultType]}</div>
+    `;
+    document.getElementById('scenarios-container').appendChild(card);
+    updateParamRow(card.querySelector('select'), idx);
+  }
+
+  function onTypeChange(sel) {
+    const card = sel.closest('.scenario-card');
+    const idx = card.dataset.idx;
+    updateParamRow(sel, idx);
+  }
+
+  function updateParamRow(sel, idx) {
+    const type = sel.value;
+    const paramRow = document.getElementById(`param-row-${idx}`);
+    const paramLabel = document.getElementById(`param-label-${idx}`);
+    const paramInput = document.getElementById(`param-input-${idx}`);
+    const hint = document.getElementById(`formula-hint-${idx}`);
+
+    hint.textContent = FORMULAS[type] ?? '';
+
+    const p = PARAM_LABELS[type];
+    if (p) {
+      paramRow.classList.add('visible');
+      paramLabel.textContent = p.label;
+      paramInput.placeholder = p.placeholder;
+      if (!paramInput.value) paramInput.value = p.default;
+    } else {
+      paramRow.classList.remove('visible');
+    }
+  }
+
+  function removeScenario(btn) {
+    btn.closest('.scenario-card').remove();
+  }
+
+  function applyScenario(raw, type, param, totalPts) {
+    let score;
+    switch (type) {
+      case 'sqrt':
+        score = Math.sqrt(raw) * 10;
+        break;
+      case 'sqrt_scale': {
+        const scaleMax = parseFloat(param) || 100;
+        score = Math.sqrt(raw / 100) * scaleMax;
+        break;
+      }
+      case 'linear': {
+        const mult = parseFloat(param) || 1;
+        score = raw * mult;
+        break;
+      }
+      case 'power': {
+        const exp = parseFloat(param) || 0.5;
+        score = Math.pow(raw / 100, exp) * 100;
+        break;
+      }
+      case 'add_points': {
+        const pts = parseFloat(param) || 0;
+        score = raw + pts;
+        break;
+      }
+      case 'extra_credit': {
+        const ec = parseFloat(param) || 0;
+        const total = parseFloat(totalPts) || 100;
+        score = raw + (ec / total) * 100;
+        break;
+      }
+      case 'scale_to': {
+        const classMax = parseFloat(param) || 100;
+        score = (raw / classMax) * 100;
+        break;
+      }
+      case 'bell': {
+        const shift = parseFloat(param) || 0;
+        score = raw + shift;
+        break;
+      }
+      default:
+        score = raw;
+    }
+    return Math.min(100, Math.max(0, score));
+  }
+
+  function letterGrade(score) {
+    if (score >= 93) return 'A';
+    if (score >= 90) return 'A−';
+    if (score >= 87) return 'B+';
+    if (score >= 83) return 'B';
+    if (score >= 80) return 'B−';
+    if (score >= 77) return 'C+';
+    if (score >= 73) return 'C';
+    if (score >= 70) return 'C−';
+    if (score >= 67) return 'D+';
+    if (score >= 63) return 'D';
+    if (score >= 60) return 'D−';
+    return 'F';
+  }
+
+  function calculate() {
+    const rawStr = document.getElementById('raw-grade').value.trim();
+    if (!rawStr) { alert('Please enter your raw grade first.'); return; }
+    const raw = parseFloat(rawStr);
+    if (isNaN(raw) || raw < 0 || raw > 100) { alert('Raw grade must be between 0 and 100.'); return; }
+    const totalPts = document.getElementById('total-points').value;
+
+    // base
+    document.getElementById('base-score-display').textContent =
+      `${raw.toFixed(2)}%  ·  ${letterGrade(raw)}`;
+
+    const cards = document.querySelectorAll('.scenario-card');
+    const grid = document.getElementById('results-grid');
+    grid.innerHTML = '';
+
+    cards.forEach((card, i) => {
+      const idx = card.dataset.idx;
+      const colorClass = COLORS[idx % COLORS.length];
+      const name = card.querySelector('.scenario-name-input').value || `Scenario ${i + 1}`;
+      const type = card.querySelector('select').value;
+      const paramInput = document.getElementById(`param-input-${idx}`);
+      const param = paramInput ? paramInput.value : '';
+
+      const result = applyScenario(raw, type, param, totalPts);
+      const delta = result - raw;
+      const deltaStr = (delta >= 0 ? '+' : '') + delta.toFixed(2) + '%';
+      const deltaClass = delta > 0 ? 'positive' : delta < 0 ? 'negative' : '';
+
+      const curveLabel = CURVE_OPTIONS.find(o => o.value === type)?.label ?? type;
+
+      const rc = document.createElement('div');
+      rc.className = `result-card ${colorClass}`;
+      rc.innerHTML = `
+        <div class="result-label">${name}</div>
+        <div class="result-score ${colorClass}">${result.toFixed(2)}%</div>
+        <div class="result-letter">${letterGrade(result)}</div>
+        <div class="result-delta ${deltaClass}">${deltaStr} vs raw</div>
+        <span class="result-type-badge">${curveLabel.split('(')[0].trim()}</span>
+      `;
+      grid.appendChild(rc);
+    });
+
+    const section = document.getElementById('results-section');
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Seed with 2 defaults
+  addScenario('curve');
+  addScenario('extra_credit');
+</script>
+</body>
+</html>
